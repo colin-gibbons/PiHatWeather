@@ -1,8 +1,9 @@
 import random
 from typing import List
 
-from weather_codes import WeatherCodes
+from weather_code import WeatherCode
 import color
+
 
 class Animation:
     color = None
@@ -20,45 +21,79 @@ class Animation:
         self.max_frequency = max_frequency
 
     def __str__(self):
-        return "(Animation: alpha {0}, isFadingOut {1}, index {2}, frequency {3})".format(self.alpha, self.isFadingOut, self.index, self.frequency)
+        return (
+            "(Animation: alpha {0}, isFadingOut {1}, index {2}, frequency {3})".format(
+                self.alpha, self.isFadingOut, self.index, self.frequency
+            )
+        )
+
 
 def create_rain_animation(weather_code):
-    max_frequency = weather_code.value/100
+    max_frequency = weather_code.value / 100
     return Animation(color.blue, 0.05, random.uniform(0, max_frequency), max_frequency)
 
+
 def create_lightning_animation(weather_code):
-    max_frequency = weather_code.value/100
+    max_frequency = weather_code.value / 100
     return Animation(color.yellow, 0.5, random.uniform(0, max_frequency), max_frequency)
+
 
 def create_col_animations(weather_codes):
     col_animations = []
     for weather_code in weather_codes:
-        if weather_code in [WeatherCodes.DRIZZLE_LIGHT, WeatherCodes.DRIZZLE_MODERATE,  WeatherCodes.DRIZZLE_DENSE]:
-            col_animations.append([create_rain_animation(weather_code) for _ in range(1)])
-        elif weather_code in [WeatherCodes.RAIN_LIGHT, WeatherCodes.RAIN_MODERATE, WeatherCodes.RAIN_HEAVY]:
-            col_animations.append([create_rain_animation(weather_code) for _ in range(2)])
-        elif weather_code in [WeatherCodes.RAIN_SHOWER_LIGHT, WeatherCodes.RAIN_SHOWER_MODERATE, WeatherCodes.RAIN_SHOWER_HEAVY]:
-            col_animations.append([create_rain_animation(weather_code) for _ in range(3)])
-        elif weather_code in [WeatherCodes.THUNDERSTORM, WeatherCodes.THUNDERSTORM_LIGHT_HAIL, WeatherCodes.THUNDERSTORM_HEAVY_HAIL]:
-            col_animations.append([
-                create_rain_animation(weather_code), create_rain_animation(weather_code), create_rain_animation(weather_code),
-                create_lightning_animation(weather_code)
-            ])
+        if weather_code in [
+            WeatherCode.DRIZZLE_LIGHT,
+            WeatherCode.DRIZZLE_MODERATE,
+            WeatherCode.DRIZZLE_DENSE,
+        ]:
+            col_animations.append(
+                [create_rain_animation(weather_code) for _ in range(1)]
+            )
+        elif weather_code in [
+            WeatherCode.RAIN_LIGHT,
+            WeatherCode.RAIN_MODERATE,
+            WeatherCode.RAIN_HEAVY,
+        ]:
+            col_animations.append(
+                [create_rain_animation(weather_code) for _ in range(2)]
+            )
+        elif weather_code in [
+            WeatherCode.RAIN_SHOWER_LIGHT,
+            WeatherCode.RAIN_SHOWER_MODERATE,
+            WeatherCode.RAIN_SHOWER_HEAVY,
+        ]:
+            col_animations.append(
+                [create_rain_animation(weather_code) for _ in range(3)]
+            )
+        elif weather_code in [
+            WeatherCode.THUNDERSTORM,
+            WeatherCode.THUNDERSTORM_LIGHT_HAIL,
+            WeatherCode.THUNDERSTORM_HEAVY_HAIL,
+        ]:
+            col_animations.append(
+                [
+                    create_rain_animation(weather_code),
+                    create_rain_animation(weather_code),
+                    create_rain_animation(weather_code),
+                    create_lightning_animation(weather_code),
+                ]
+            )
         else:
             col_animations.append([])
     return col_animations
 
+
 def update_animations(column_animations: List[List[Animation]], column_data, pixels):
     for index, col in enumerate(column_animations):
         curr_anim_indicies = []
-        for anim in col: #todo convert this to map
+        for anim in col:  # todo convert this to map
             if anim.index is not None:
                 curr_anim_indicies.append(anim.index)
-        avail_indicies = list(set(range(0,8)) - set(curr_anim_indicies))
+        avail_indicies = list(set(range(0, 8)) - set(curr_anim_indicies))
         random.shuffle(avail_indicies)
 
         for animation in col:
-            if animation.index is None: 
+            if animation.index is None:
                 if animation.frequency >= random.random():
                     animation.frequency = random.uniform(0, animation.max_frequency)
                     animation.index = avail_indicies.pop()
@@ -71,6 +106,12 @@ def update_animations(column_animations: List[List[Animation]], column_data, pix
                     animation.isFadingOut = True
                     animation.alpha = 1.0
 
-                animation.alpha += animation.speed if not animation.isFadingOut else -animation.speed
-                pixels[(index * 8) + animation.index] = color.blend(column_data[index][animation.index], animation.color, animation.alpha)
-            #print("col: " + str(index) + ", " + str(animation))
+                animation.alpha += (
+                    animation.speed if not animation.isFadingOut else -animation.speed
+                )
+                pixels[(index * 8) + animation.index] = color.blend(
+                    column_data[index][animation.index],
+                    animation.color,
+                    animation.alpha,
+                )
+            # print("col: " + str(index) + ", " + str(animation))
